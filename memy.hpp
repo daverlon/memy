@@ -17,13 +17,14 @@ public:
     ~Process();
 
     kern_return_t CreateTask();
-    kern_return_t FindBaseAddress();
+    bool FindBaseAddress(mach_vm_address_t* address);
 
-    mach_vm_size_t ReadMemory(mach_vm_address_t offset, mach_vm_size_t size, void* data);
+    bool FindStackPointer(mach_vm_address_t* address);
+
+    mach_vm_size_t ReadMemory(mach_vm_address_t addresss, mach_vm_size_t size, void* data);
 
 private:
 
     pid_t pid;
     mach_port_t task;
-    mach_vm_address_t baseAddress;
 };

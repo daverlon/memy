@@ -11,10 +11,17 @@ int main(int argc, char* argv[]) {
     
     memy::Process mem((pid_t)std::stoi(argv[1]));
 
-    // uint64_t offset = 0x100003e0c - 0x10000000;
-    mach_vm_address_t offset = 0x100003e0c - 0x10000000;
-    void* data;
-    mem.ReadMemory(offset, (mach_vm_size_t)4, data);
+    mach_vm_address_t bp;
+    mem.FindBaseAddress(&bp);
+    // std::cout << "BP: 0x" << std::hex << bp << std::endl;
+
+    mach_vm_address_t sp;
+    mem.FindStackPointer(&sp);
+    // std::cout << "SP: 0x" << std::hex << sp << std::endl;
+
+    int data = -1;
+    mach_vm_size_t bytes_read = mem.ReadMemory(sp+0x24, (mach_vm_size_t)sizeof(int), &data);
+    std::cout << bytes_read << "," << data << std::endl;
 
     // std::cout << *(int32_t*)data << std::endl;
 

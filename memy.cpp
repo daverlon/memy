@@ -5,24 +5,12 @@
 memy::Process::Process(pid_t pid) {
     this->pid = pid;
 
-    kern_return_t kr;
-
-    kr = this->CreateTask();
-    if (kr != KERN_SUCCESS) {
+    if (kern_return_t kr = this->CreateTask() != KERN_SUCCESS)
+    {
         std::cerr << "Error: Failed to create task: ";
         std::cerr << mach_error_string(kr) << std::endl;
         return;
     }
-
-    kr = this->FindBaseAddress();
-    if (kr != KERN_SUCCESS) {
-        std::cerr << "Error: Failed to find base address: ";
-        std::cerr << mach_error_string(kr) << std::endl;
-        return;
-    }
-
-    std::cout << "Base address: 0x" << std::hex << this->baseAddress << std::dec << std::endl;
-    // std::cout << "Base address: " << this->baseAddress << std::endl;
 }
 
 memy::Process::~Process() {
@@ -33,7 +21,7 @@ kern_return_t memy::Process::CreateTask() {
     return task_for_pid(mach_task_self(), this->pid, &this->task);
 }
 
-kern_return_t memy::Process::FindBaseAddress() {
+bool memy::Process::FindBaseAddress(mach_vm_address_t* address) {
     mach_vm_address_t vmoffset;
     vm_map_size_t vmsize;
     uint32_t nesting_depth = 0;
@@ -50,24 +38,54 @@ kern_return_t memy::Process::FindBaseAddress() {
     );
 
     if (kr == KERN_SUCCESS) {
-        this->baseAddress = vmoffset;
+        *address = vmoffset;
         // std::cout << "Base address: 0x" << std::hex << this->baseAddress << std::endl;
+        return true;
     }
 
-    return kr;
+    return false;
 }
 
-mach_vm_size_t memy::Process::ReadMemory(mach_vm_address_t offset, mach_vm_size_t size, void* data) {
-    
+bool memy::Process::FindStackPointer(mach_vm_address_t* address) {
+    thread_act_port_array_t threads;
+    mach_msg_type_number_t thread_count;
+
+    kern_return_t kr = task_threads(this->task, &threads, &thread_count);
+    if (kr != KERN_SUCCESS) {
+        std::cout << "Error: Failed to get threads: " << mach_error_string(kr);
+        return false;
+    }
+
+    bool found = false;
+    for (mach_msg_type_number_t i = 0; i < thread_count; i++) {
+        arm_thread_state64_t state;
+        mach_msg_type_number_t count = ARM_THREAD_STATE64_COUNT;
+        kr = thread_get_state(
+            threads[i], 
+            ARM_THREAD_STATE64,
+            (thread_state_t)&state,
+            &count
+        );
+        if (kr == KERN_SUCCESS) {
+            *address = state.__sp;
+            found = true;
+            break;
+        }
+    }
+
+    for (mach_msg_type_number_t i = 0; i < thread_count; i++) {
+        mach_port_deallocate(mach_task_self(), threads[i]);
+    }
+    vm_deallocate(mach_task_self(), (mach_vm_address_t)threads, sizeof(thread_act_t) * thread_count);
+
+    return found;
+}
+
+mach_vm_size_t memy::Process::ReadMemory(mach_vm_address_t address, mach_vm_size_t size, void* data) {
     mach_vm_size_t read_size;
-
-    std::cout << "Task: " << this->task << std::endl;
-    std::cout << "Address: 0x" << std::hex << (this->baseAddress+offset) << std::endl;
-    std::cout << "Size: " << std::dec << size << std::endl;
-
     kern_return_t kr = mach_vm_read_overwrite(
         this->task,
-        this->baseAddress+offset,
+        address,
         size,
         (mach_vm_address_t)data,
         &read_size
