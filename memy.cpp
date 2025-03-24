@@ -7,7 +7,7 @@ memy::Process::Process(pid_t pid) {
 
     if (kern_return_t kr = this->CreateTask() != KERN_SUCCESS)
     {
-        std::cerr << "Error: Failed to create task: ";
+        std::cerr << "Failed to create task: ";
         std::cerr << mach_error_string(kr) << std::endl;
         return;
     }
@@ -52,7 +52,7 @@ bool memy::Process::FindStackPointer(mach_vm_address_t* address) {
 
     kern_return_t kr = task_threads(this->task, &threads, &thread_count);
     if (kr != KERN_SUCCESS) {
-        std::cout << "Error: Failed to get threads: " << mach_error_string(kr);
+        std::cerr << "Failed to get threads: " << mach_error_string(kr);
         return false;
     }
 
@@ -99,3 +99,15 @@ mach_vm_size_t memy::Process::ReadMemory(mach_vm_address_t address, mach_vm_size
 
     return read_size;
 }
+
+void memy::Process::WriteMemory(mach_vm_address_t address, void* data, mach_vm_size_t size) {
+    kern_return_t kr = mach_vm_write(this->task, 
+        address,
+        (vm_offset_t)(data),
+        (mach_msg_type_number_t)size
+    );
+    if (kr != KERN_SUCCESS) {
+        std::cerr << "Error writing memory: " << mach_error_string(kr) << std::endl;
+        return;
+    }
+} 

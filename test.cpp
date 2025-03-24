@@ -19,6 +19,9 @@ int main(int argc, char* argv[]) {
     mem.FindStackPointer(&sp);
     // std::cout << "SP: 0x" << std::hex << sp << std::endl;
 
+    int x = 69;
+    mem.WriteMemory(sp+0x24, &x, sizeof(int));
+
     int data = -1;
     mach_vm_size_t bytes_read = mem.ReadMemory(sp+0x24, (mach_vm_size_t)sizeof(int), &data);
     std::cout << bytes_read << "," << data << std::endl;

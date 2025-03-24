@@ -18,10 +18,9 @@ public:
 
     kern_return_t CreateTask();
     bool FindBaseAddress(mach_vm_address_t* address);
-
     bool FindStackPointer(mach_vm_address_t* address);
-
-    mach_vm_size_t ReadMemory(mach_vm_address_t addresss, mach_vm_size_t size, void* data);
+    mach_vm_size_t ReadMemory(mach_vm_address_t address, mach_vm_size_t size, void* data);
+    void WriteMemory(mach_vm_address_t address, void* data, mach_vm_size_t size);
 
 private:
 
