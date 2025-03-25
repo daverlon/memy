@@ -46,7 +46,7 @@ bool memy::Process::FindBaseAddress(mach_vm_address_t* address) {
     return false;
 }
 
-bool memy::Process::FindStackPointer(mach_vm_address_t* address) {
+bool memy::Process::FindThreadState(arm_thread_state64_t* state) {
     thread_act_port_array_t threads;
     mach_msg_type_number_t thread_count;
 
@@ -58,16 +58,14 @@ bool memy::Process::FindStackPointer(mach_vm_address_t* address) {
 
     bool found = false;
     for (mach_msg_type_number_t i = 0; i < thread_count; i++) {
-        arm_thread_state64_t state;
         mach_msg_type_number_t count = ARM_THREAD_STATE64_COUNT;
         kr = thread_get_state(
             threads[i], 
             ARM_THREAD_STATE64,
-            (thread_state_t)&state,
+            (thread_state_t)state,
             &count
         );
         if (kr == KERN_SUCCESS) {
-            *address = state.__sp;
             found = true;
             break;
         }
