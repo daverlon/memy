@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 
     mach_vm_address_t sp = state.__sp;
     // std::cout << "SP: 0x" << std::hex << sp << std::endl;
-
+    
     // int x = 69;
     // mem.WriteMemory(sp+0x24, &x, sizeof(int));
 
@@ -31,6 +31,13 @@ int main(int argc, char* argv[]) {
     std::cout << bytes_read << "," << data << std::endl;
 
     // std::cout << *(int32_t*)data << std::endl;
+
+    while (1) {
+        mem.FindThreadState(&state);
+        std::cout << state.__pc << std::endl;
+        sleep(1);
+    }
+
 
     return 0;
 }

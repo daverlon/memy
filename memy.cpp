@@ -56,19 +56,29 @@ bool memy::Process::FindThreadState(arm_thread_state64_t* state) {
         return false;
     }
 
+    for (mach_msg_type_number_t i = 0; i < thread_count; i++) {
+        thread_suspend(threads[i]);
+    }
+
     bool found = false;
+    arm_thread_state64_t temp_state;
     for (mach_msg_type_number_t i = 0; i < thread_count; i++) {
         mach_msg_type_number_t count = ARM_THREAD_STATE64_COUNT;
         kr = thread_get_state(
             threads[i], 
             ARM_THREAD_STATE64,
-            (thread_state_t)state,
+            (thread_state_t)&temp_state,
             &count
         );
         if (kr == KERN_SUCCESS) {
+            *state = temp_state;
             found = true;
             break;
         }
+    }
+    
+    for (mach_msg_type_number_t i = 0; i < thread_count; i++) {
+        thread_resume(threads[i]);
     }
 
     for (mach_msg_type_number_t i = 0; i < thread_count; i++) {
