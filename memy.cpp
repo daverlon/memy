@@ -14,7 +14,9 @@ memy::Process::Process(pid_t pid) {
 }
 
 memy::Process::~Process() {
-
+    if (this->task != TASK_NULL) {
+        mach_port_deallocate(mach_task_self(), this->task);
+    }
 }
 
 kern_return_t memy::Process::CreateTask() {
@@ -79,6 +81,7 @@ bool memy::Process::FindThreadState(arm_thread_state64_t* state) {
     
     for (mach_msg_type_number_t i = 0; i < thread_count; i++) {
         thread_resume(threads[i]);
+        mach_port_deallocate(mach_task_self(), threads[i]);
     }
 
     for (mach_msg_type_number_t i = 0; i < thread_count; i++) {
