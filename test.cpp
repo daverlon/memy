@@ -34,8 +34,8 @@ int main(int argc, char* argv[]) {
 
     while (1) {
         mem.FindThreadState(&state);
-        std::cout << state.__pc << std::endl;
-        sleep(1);
+        std::cout << "0x" << std::hex << state.__pc << std::endl;
+        usleep(100000);
     }
 
 
